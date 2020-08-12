@@ -26,9 +26,14 @@ exports.createPost = (req, res, next) => {
         error.statusCode = 422;
         throw error;
     }
+    if (!req.file) {
+        const error = new Error('Image not found');
+        error.statusCode = 422;
+        throw error;
+    }
     const post = new Post({
         title: title,
-        imageUrl: 'images/book.png',
+        imageUrl: req.file.path,
         content: content,
         creator: {
             name: 'Dummy Creator'
