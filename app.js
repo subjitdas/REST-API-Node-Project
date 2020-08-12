@@ -1,3 +1,5 @@
+const path = require('path');
+
 const express = require('express');
 const bodyParser = require('body-parser');
 const dotenv = require('dotenv').config();
@@ -19,6 +21,15 @@ app.use((req, res, next) => {
 });
 
 app.use('/feed', feedRoutes);
+
+app.use((error, req, res, next) => {
+    console.log(error);
+    const status = error.statusCode || 500;
+    const message = error.message;
+    res.status(status).json({
+        message: message
+    })
+});
 
 mongoose.connect(MONGODB_URI)
     .then(() => {

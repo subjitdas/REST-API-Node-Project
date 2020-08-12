@@ -1,3 +1,5 @@
+const Post = require('../models/post');
+
 const { validationResult } = require('express-validator/check');
 
 exports.getPosts = (req, res, next) => {
@@ -22,21 +24,29 @@ exports.createPost = (req, res, next) => {
     const content = req.body.content;
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-        return res.status(422).json({
-            message: 'Invalid input'
-        });
+        const error = new Error('Validation failed, invalid input')
+        error.statusCode = 422;
+        throw error;
     }
-    //Add this data/post to the database
-    res.status(201).json({
-        message: 'post created successfully',
-        post: {
-            _id: new Date().toISOString(),
-            title: title,
-            content: content,
-            creator: {
-                name: 'Subjit'
-            },
-            createdAt: new Date()
+    const post = new Post({
+        title: title,
+        imageUrl: 'images/book.png',
+        content: content,
+        creator: {
+            name: 'Dummy Creator'
         }
     });
+    post.save()
+        .then(result => {
+            res.status(201).json({
+                message: 'post created successfully',
+                post: result
+            });
+        })
+        .catch(err => {
+            if (!err.statusCode) {
+                err.statusCode = 500;
+            }
+            next(err);
+        });
 };
