@@ -80,3 +80,38 @@ exports.login = (req, res, next) => {
             next(err);
         });
 };
+
+exports.getStatus = (req, res, next) => {
+    User.findById(req.userId)
+        .then(user => {
+            res.status(200).json({
+                status: user.status
+            })
+        })
+        .catch(err => {
+            if(!err.statusCode) {
+                err.statusCode = 500;
+            }
+            next(err);
+        });
+};
+
+exports.updateStatus = (req, res, next) => {
+    const updatedStatus = req.body.status;
+    User.findById(req.userId)
+        .then(user => {
+            user.status = updatedStatus;
+            return user.save();
+        })
+        .then(result => {
+            res.status(201).json({
+                message: "Updated status successfully"
+            });
+        })
+        .catch(err => {
+            if(!err.statusCode) {
+                err.statusCode = 500;
+            }
+            next(err);
+        });
+};
