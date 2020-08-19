@@ -5,8 +5,6 @@ const Post = require('../models/post');
 const User = require('../models/user');
 
 const { validationResult } = require('express-validator/check');
-const { find } = require('../models/post');
-const user = require('../models/user');
 
 exports.getPosts = (req, res, next) => {
     const currentPage = req.query.page || 1;
@@ -129,6 +127,11 @@ exports.updatePost = (req, res, next) => {
                 error.statusCode = 404;
                 throw error;
             }
+            if (post.creator.toString() !== req.userId.toString()) {
+                const error = new Error('Unauthorized action!');
+                error.statusCode = 403;  //status code for authoriztion issue
+                throw error;
+            }
             if (imageUrl !== post.imageUrl) {
                 clearImage(post.imageUrl);
             }
@@ -157,7 +160,11 @@ exports.deletePost = (req, res, next) => {
                 error.statusCode = 404;
                 throw error;
             }
-            //check if the user is loggeed in
+            if (post.creator.toString() !== req.userId.toString()) {
+                const error = new Error('Unauthorized action!');
+                error.statusCode = 403;  //status code for authoriztion issue
+                throw error;
+            }
             clearImage(post.imageUrl);
             return Post.findByIdAndDelete(postId);
         })
