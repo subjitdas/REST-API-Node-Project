@@ -2,9 +2,11 @@ const path = require('path');
 const fs = require('fs');
 
 const Post = require('../models/post');
+const User = require('../models/user');
 
 const { validationResult } = require('express-validator/check');
 const { find } = require('../models/post');
+const user = require('../models/user');
 
 exports.getPosts = (req, res, next) => {
     const currentPage = req.query.page || 1;
@@ -33,8 +35,6 @@ exports.getPosts = (req, res, next) => {
 };
 
 exports.createPost = (req, res, next) => {
-    const title = req.body.title;
-    const content = req.body.content;
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
         const error = new Error('Validation failed, invalid input')
@@ -46,19 +46,32 @@ exports.createPost = (req, res, next) => {
         error.statusCode = 422;
         throw error;
     }
+    const title = req.body.title;
+    const content = req.body.content;
+    let creator;
     const post = new Post({
         title: title,
         imageUrl: req.file.path,
         content: content,
-        creator: {
-            name: 'Dummy Creator'
-        }
+        creator: req.userId
     });
     post.save()
         .then(result => {
+            return User.findById(req.userId);
+        })
+        .then(user => {
+            creator = user;
+            user.posts.push(post)
+            return user.save();
+        })
+        .then(result => {
             res.status(201).json({
                 message: 'post created successfully',
-                post: result
+                post: post,
+                creator: {
+                    _id: creator._id,
+                    name: creator.name
+                }
             });
         })
         .catch(err => {
